@@ -1,63 +1,49 @@
 use bevy::prelude::*;
-use bevy_editor_pls::*;
+
+// Asset Constants
+const PLAYER_SPRITE: &str = "player_a_01.png";
+const PLAYER_SIZE: (f32, f32) = (144., 75.);
+
+const SPRITE_SCALE: f32 = 0.5;
 
 fn main() {
     App::new()
+        .insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
+        .insert_resource(WindowDescriptor {
+            title: "Rust Invaders!".to_string(),
+            width: 598.0,
+            height: 676.0,
+            ..Default::default()
+        })
         .add_plugins(DefaultPlugins)
-        .add_plugin(EditorPlugin)
-        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin)
-        .add_plugin(bevy::diagnostic::EntityCountDiagnosticsPlugin)
-        .add_startup_system(startup_system)
-        .add_system(cube_move)
+        .add_startup_system(setup_system)
         .run()
 }
 
-#[derive(Component)]
-struct Cube;
-
-fn startup_system(
+fn setup_system(
     mut commands: Commands,
-    mut mesh_assets: ResMut<Assets<Mesh>>,
-    mut materials_assets: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+    mut windows: ResMut<Windows>,
 ) {
-    let mut cam = PerspectiveCameraBundle::new_3d();
-    cam.transform.translation = Vec3::ONE * 5.0;
-    cam.transform.look_at(Vec3::ZERO, Vec3::Y);
-    commands.spawn_bundle(cam);
+    // camera
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
-    commands
-        .spawn_bundle(PbrBundle {
-            mesh: mesh_assets.add(Mesh::from(shape::Cube { size: 1.0 })),
-            material: materials_assets.add(StandardMaterial {
-                base_color: Color::rgb(1.0, 0.5, 0.5),
-                ..Default::default()
-            }),
+    // capture window size
+    let window = windows.get_primary_mut().unwrap();
+    let (win_l, win_h) = (window.width(), window.height());
+
+    // position window (for tutorial)
+    window.set_position(IVec2::new(3200, 170));
+
+    // add player
+    let bottom = -win_h / 2.;
+    commands.spawn_bundle(SpriteBundle {
+        texture: asset_server.load(PLAYER_SPRITE),
+        transform: Transform {
+            translation: Vec3::new(0., bottom + PLAYER_SIZE.1 / 2. * SPRITE_SCALE + 5., 10.),
+            scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
             ..Default::default()
-        })
-        .insert(Cube);
-}
-
-fn cube_move(input: Res<Input<KeyCode>>, mut cubes: Query<&mut Transform, With<Cube>>) {
-    let mut change = Vec3::ZERO;
-    if input.just_pressed(KeyCode::W) {
-        change.z -= 1.0;
-    }
-    if input.just_pressed(KeyCode::S) {
-        change.z += 1.0;
-    }
-    if input.just_pressed(KeyCode::A) {
-        change.x -= 1.0;
-    }
-    if input.just_pressed(KeyCode::D) {
-        change.x += 1.0;
-    }
-    if input.just_pressed(KeyCode::PageDown) {
-        change.y -= 1.0;
-    }
-    if input.just_pressed(KeyCode::PageUp) {
-        change.y += 1.0;
-    }
-    for mut cube in cubes.iter_mut() {
-        cube.translation += change;
-    }
+        },
+        ..Default::default()
+    });
 }
