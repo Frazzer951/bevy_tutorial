@@ -1,16 +1,13 @@
 use bevy::prelude::*;
 
-use crate::{
-	components::Player, components::Velocity, GameTextures, WinSize, BASE_SPEED, PLAYER_SIZE,
-	SPRITE_SCALE, TIME_STEP,
-};
+use crate::components::{Movable, Player, Velocity};
+use crate::{GameTextures, WinSize, BASE_SPEED, PLAYER_SIZE, SPRITE_SCALE, TIME_STEP};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
 	fn build(&self, app: &mut App) {
 		app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
-			.add_system(player_movement_system)
 			.add_system(player_keyboard_event_system)
 			.add_system(player_fire_system);
 	}
@@ -38,6 +35,7 @@ fn player_spawn_system(
 			..Default::default()
 		})
 		.insert(Player)
+		.insert(Movable { auto_despawn: true })
 		.insert(Velocity { x: 0., y: 0. });
 }
 
@@ -50,16 +48,25 @@ fn player_fire_system(
 	if let Ok(player_tf) = query.get_single() {
 		if kb.just_pressed(KeyCode::Space) {
 			let (x, y) = (player_tf.translation.x, player_tf.translation.y);
+			let x_offset = PLAYER_SIZE.0 / 2. * SPRITE_SCALE - 5.;
 
-			commands.spawn_bundle(SpriteBundle {
-				texture: game_textures.player_laser.clone(),
-				transform: Transform {
-					translation: Vec3::new(x, y, 0.),
-					scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
-					..Default::default()
-				},
-				..Default::default()
-			});
+			let mut spawn_laser = |x_offset: f32| {
+				commands
+					.spawn_bundle(SpriteBundle {
+						texture: game_textures.player_laser.clone(),
+						transform: Transform {
+							translation: Vec3::new(x + x_offset, y + 15., 0.),
+							scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
+							..Default::default()
+						},
+						..Default::default()
+					})
+					.insert(Movable { auto_despawn: true })
+					.insert(Velocity { x: 0., y: 1. });
+			};
+
+			spawn_laser(x_offset);
+			spawn_laser(-x_offset);
 		}
 	}
 }
@@ -76,13 +83,5 @@ fn player_keyboard_event_system(
 		} else {
 			0.
 		};
-	}
-}
-
-fn player_movement_system(mut query: Query<(&Velocity, &mut Transform), With<Player>>) {
-	for (velocity, mut transform) in query.iter_mut() {
-		let translation = &mut transform.translation;
-		translation.x += velocity.x * TIME_STEP * BASE_SPEED;
-		translation.y += velocity.y * TIME_STEP * BASE_SPEED;
 	}
 }
