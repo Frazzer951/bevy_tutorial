@@ -5,11 +5,11 @@ use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
-use crate::components::{Enemy, FromEnemy, SpriteSize};
+use crate::components::{Enemy, FromEnemy, Laser, Movable, SpriteSize, Velocity};
 use crate::enemy::formation::{Formation, FormationMaker};
 use crate::{
-	EnemyCount, GameTextures, Laser, Movable, Velocity, WinSize, BASE_SPEED, ENEMY_LASER_SIZE,
-	ENEMY_MAX, ENEMY_SIZE, SPRITE_SCALE, TIME_STEP,
+	EnemyCount, GameTextures, WinSize, ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE, SPRITE_SCALE,
+	TIME_STEP,
 };
 
 mod formation;
@@ -83,7 +83,7 @@ fn enemy_fire_system(
 			.spawn_bundle(SpriteBundle {
 				texture: game_textures.enemy_laser.clone(),
 				transform: Transform {
-					translation: Vec3::new(x, y - 15., 10.),
+					translation: Vec3::new(x, y - 15., 0.),
 					rotation: Quat::from_rotation_x(PI),
 					scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
 					..Default::default()
@@ -98,11 +98,7 @@ fn enemy_fire_system(
 	}
 }
 
-fn enemy_movement_system(
-	time: Res<Time>,
-	mut query: Query<(&mut Transform, &mut Formation), With<Enemy>>,
-) {
-	let now = time.seconds_since_startup() as f32;
+fn enemy_movement_system(mut query: Query<(&mut Transform, &mut Formation), With<Enemy>>) {
 	for (mut transform, mut formation) in query.iter_mut() {
 		// current position
 		let (x_org, y_org) = (transform.translation.x, transform.translation.y);
@@ -110,8 +106,8 @@ fn enemy_movement_system(
 		// max distance
 		let max_distance = TIME_STEP * formation.speed;
 
-		// fixtures (hardcode for now)
-		let dir: f32 = if formation.start.0 < 0. { 1. } else { -1. }; // 1 for ccw, -1 for cw
+		// 1 for counter clockwise, -1 clockwise
+		let dir: f32 = if formation.start.0 < 0. { 1. } else { -1. };
 		let (x_pivot, y_pivot) = formation.pivot;
 		let (x_radius, y_radius) = formation.radius;
 
@@ -129,13 +125,13 @@ fn enemy_movement_system(
 		let distance = (dx * dx + dy * dy).sqrt();
 		let distance_ratio = if distance != 0. { max_distance / distance } else { 0. };
 
-		// compute final x/y;
+		// compute final x/y
 		let x = x_org - dx * distance_ratio;
 		let x = if dx > 0. { x.max(x_dst) } else { x.min(x_dst) };
 		let y = y_org - dy * distance_ratio;
 		let y = if dy > 0. { y.max(y_dst) } else { y.min(y_dst) };
 
-		// start rotating the formation angle only when the sprite is on or close to ellipse
+		// start rotating the formation angle only when sprite is on or close to ellipse
 		if distance < max_distance * formation.speed / 20. {
 			formation.angle = angle;
 		}

@@ -1,7 +1,7 @@
 use bevy::prelude::Component;
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 
-use crate::{BASE_SPEED, FORMATION_MEMBERS_MAX, WinSize};
+use crate::{WinSize, BASE_SPEED, FORMATION_MEMBERS_MAX};
 
 /// Component - Enemy Formation (per enemy)
 #[derive(Clone, Component)]
@@ -42,15 +42,14 @@ impl FormationMaker {
 
 				// compute the pivot x/y
 				let w_span = win_size.w / 4.;
-				let h_span = win_size.h / 3. + 50.;
-				let pivot = (rng.gen_range(-w_span..w_span), rng.gen_range(-h_span..h_span));
-
+				let h_span = win_size.h / 3. - 50.;
+				let pivot = (rng.gen_range(-w_span..w_span), rng.gen_range(0.0..h_span));
 
 				// compute the radius
-				let radius = (rng.gen_range(80.0..150.),100.);
+				let radius = (rng.gen_range(80.0..150.), 100.);
 
 				// compute the start angle
-				let angle = (y-pivot.1).atan2(x-pivot.0);
+				let angle = (y - pivot.1).atan2(x - pivot.0);
 
 				// speed (fixed for now)
 				let speed = BASE_SPEED;
@@ -61,7 +60,7 @@ impl FormationMaker {
 					radius,
 					pivot,
 					speed,
-					angle
+					angle,
 				};
 
 				// store as template

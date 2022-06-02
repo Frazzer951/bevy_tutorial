@@ -2,7 +2,7 @@ use bevy::core::Timer;
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::Component;
 
-// region: Common Components
+// region:    --- Common Components
 #[derive(Component)]
 pub struct Velocity {
 	pub x: f32,
@@ -25,25 +25,25 @@ impl From<(f32, f32)> for SpriteSize {
 		SpriteSize(Vec2::new(val.0, val.1))
 	}
 }
-// endregion
+// endregion: --- Common Components
 
-// region: Player Components
+// region:    --- Player Components
 #[derive(Component)]
 pub struct Player;
 
 #[derive(Component)]
 pub struct FromPlayer;
-// endregion
+// endregion: --- Player Components
 
-// region: Enemy Components
+// region:    --- Enemy Components
 #[derive(Component)]
 pub struct Enemy;
 
 #[derive(Component)]
 pub struct FromEnemy;
-// endregion
+// endregion: --- Enemy Components
 
-// region: Explosion Components
+// region:    --- Explosion Components
 #[derive(Component)]
 pub struct Explosion;
 
@@ -58,4 +58,4 @@ impl Default for ExplosionTimer {
 		Self(Timer::from_seconds(0.05, true))
 	}
 }
-// endregion
+// endregion: --- Explosion Components
