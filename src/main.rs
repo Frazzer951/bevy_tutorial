@@ -180,7 +180,7 @@ fn player_laser_hit_enemy_system(
 			continue;
 		}
 
-		let laser_scale = Vec2::from(laser_tf.scale.xy());
+		let laser_scale = laser_tf.scale.xy();
 
 		// iterate through the enemies
 		for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
@@ -190,7 +190,7 @@ fn player_laser_hit_enemy_system(
 				continue;
 			}
 
-			let enemy_scale = Vec2::from(enemy_tf.scale.xy());
+			let enemy_scale = enemy_tf.scale.xy();
 
 			// determine if collision
 			let collision = collide(
@@ -201,7 +201,7 @@ fn player_laser_hit_enemy_system(
 			);
 
 			// perform collision
-			if let Some(_) = collision {
+			if collision.is_some() {
 				// remove the enemy
 				commands.entity(enemy_entity).despawn();
 				despawned_entities.insert(enemy_entity);
@@ -212,7 +212,7 @@ fn player_laser_hit_enemy_system(
 				despawned_entities.insert(laser_entity);
 
 				// spawn the explosionToSpawn
-				commands.spawn().insert(ExplosionToSpawn(enemy_tf.translation.clone()));
+				commands.spawn().insert(ExplosionToSpawn(enemy_tf.translation));
 			}
 		}
 	}
@@ -226,10 +226,10 @@ fn enemy_laser_hit_player_system(
 	player_query: Query<(Entity, &Transform, &SpriteSize), With<Player>>,
 ) {
 	if let Ok((player_entity, player_tf, player_size)) = player_query.get_single() {
-		let player_scale = Vec2::from(player_tf.scale.xy());
+		let player_scale = player_tf.scale.xy();
 
 		for (laser_entity, laser_tf, laser_size) in laser_query.iter() {
-			let laser_scale = Vec2::from(laser_tf.scale.xy());
+			let laser_scale = laser_tf.scale.xy();
 
 			// determine if collision
 			let collision = collide(
@@ -240,7 +240,7 @@ fn enemy_laser_hit_player_system(
 			);
 
 			// perform the collision
-			if let Some(_) = collision {
+			if collision.is_some() {
 				// remove the player
 				commands.entity(player_entity).despawn();
 				player_state.shot(time.seconds_since_startup());
@@ -249,7 +249,7 @@ fn enemy_laser_hit_player_system(
 				commands.entity(laser_entity).despawn();
 
 				// spawn the explosionToSpawn
-				commands.spawn().insert(ExplosionToSpawn(player_tf.translation.clone()));
+				commands.spawn().insert(ExplosionToSpawn(player_tf.translation));
 
 				break;
 			}
