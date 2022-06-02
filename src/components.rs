@@ -1,4 +1,5 @@
-use bevy::math::Vec2;
+use bevy::core::Timer;
+use bevy::math::{Vec2, Vec3};
 use bevy::prelude::Component;
 
 // region: Common Components
@@ -40,4 +41,21 @@ pub struct Enemy;
 
 #[derive(Component)]
 pub struct FromEnemy;
+// endregion
+
+// region: Explosion Components
+#[derive(Component)]
+pub struct Explosion;
+
+#[derive(Component)]
+pub struct ExplosionToSpawn(pub Vec3);
+
+#[derive(Component)]
+pub struct ExplosionTimer(pub Timer);
+
+impl Default for ExplosionTimer {
+	fn default() -> Self {
+		Self(Timer::from_seconds(0.05, true))
+	}
+}
 // endregion
