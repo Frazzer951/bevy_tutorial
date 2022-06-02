@@ -1,6 +1,7 @@
+use bevy::math::Vec2;
 use bevy::prelude::Component;
 
-// Common Components
+// region: Common Components
 #[derive(Component)]
 pub struct Velocity {
 	pub x: f32,
@@ -12,6 +13,31 @@ pub struct Movable {
 	pub auto_despawn: bool,
 }
 
-// Player Components
+#[derive(Component)]
+pub struct Laser;
+
+#[derive(Component)]
+pub struct SpriteSize(pub Vec2);
+
+impl From<(f32, f32)> for SpriteSize {
+	fn from(val: (f32, f32)) -> Self {
+		SpriteSize(Vec2::new(val.0, val.1))
+	}
+}
+// endregion
+
+// region: Player Components
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Component)]
+pub struct FromPlayer;
+// endregion
+
+// region: Enemy Components
+#[derive(Component)]
+pub struct Enemy;
+
+#[derive(Component)]
+pub struct FromEnemy;
+// endregion

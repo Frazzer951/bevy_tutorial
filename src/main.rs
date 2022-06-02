@@ -1,8 +1,10 @@
 #![allow(unused)]
 
+use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::collide;
 
-use crate::components::{Movable, Velocity};
+use crate::components::{Enemy, FromPlayer, Laser, Movable, SpriteSize, Velocity};
 use crate::enemy::EnemyPlugin;
 use crate::player::PlayerPlugin;
 
@@ -10,7 +12,7 @@ mod components;
 mod enemy;
 mod player;
 
-// Asset Constants
+// region: Asset Constants
 const PLAYER_SPRITE: &str = "player_a_01.png";
 const PLAYER_SIZE: (f32, f32) = (144., 75.);
 const PLAYER_LASER_SPRITE: &str = "laser_a_01.png";
@@ -22,16 +24,19 @@ const ENEMY_LASER_SPRITE: &str = "laser_b_01.png";
 const ENEMY_LASER_SIZE: (f32, f32) = (17., 55.);
 
 const SPRITE_SCALE: f32 = 0.5;
+// endregion
 
-// Game Constants
+// region: Game Constants
 const TIME_STEP: f32 = 1. / 60.;
 const BASE_SPEED: f32 = 500.;
+// endregion
 
-// Resources
+// region: Resources
 pub struct WinSize {
 	pub w: f32,
 	pub h: f32,
 }
+// endregion
 
 struct GameTextures {
 	player: Handle<Image>,
@@ -54,6 +59,7 @@ fn main() {
 		.add_plugin(EnemyPlugin)
 		.add_startup_system(setup_system)
 		.add_system(movable_system)
+		.add_system(player_laser_hit_enemy_system)
 		.run()
 }
 
@@ -106,6 +112,39 @@ fn movable_system(
 			{
 				println!("->> despawn {entity:?}");
 				commands.entity(entity).despawn();
+			}
+		}
+	}
+}
+
+fn player_laser_hit_enemy_system(
+	mut commands: Commands,
+	laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromPlayer>)>,
+	enemy_query: Query<(Entity, &Transform, &SpriteSize), With<Enemy>>,
+) {
+	// iterate through the lasers
+	for (laser_entity, laser_tf, laser_size) in laser_query.iter() {
+		let laser_scale = Vec2::from(laser_tf.scale.xy());
+
+		// iterate through the enemies
+		for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
+			let enemy_scale = Vec2::from(enemy_tf.scale.xy());
+
+			// determine if collision
+			let collision = collide(
+				laser_tf.translation,
+				laser_size.0 * laser_scale,
+				enemy_tf.translation,
+				enemy_size.0 * enemy_scale,
+			);
+
+			// perform collision
+			if let Some(_) = collision {
+				// remove the enemy
+				commands.entity(enemy_entity).despawn();
+
+				// remove the laser
+				commands.entity(laser_entity).despawn();
 			}
 		}
 	}
